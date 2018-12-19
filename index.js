@@ -5,10 +5,6 @@ const Files = require('./modules/files');
 
 var files = new Files(Config);
 files.browseRoot();
-files.createRandomDirectory((er, path)=>{
-    console.log("er:",er);
-    console.log("path:",path);
-});
 
 console.log(Config.toString());
 
@@ -41,5 +37,14 @@ bot.on('inline_query', (msg) => {
 
 bot.on('chosen_inline_result', (msg) => {
     var folders = files.getFolders(msg.query);
-    bot.sendMessage(msg.from.id, `Result: \"${folders[msg.result_id]}\"`);
+    var folder = folders[msg.result_id];
+    bot.sendMessage(msg.from.id, `Creating directory for \"${folder}\"...`);
+    files.createRandomDirectory((err, dir) => {
+        if (err) return bot.sendMessage(msg.from.id, `Failed to create directory: ${err.toString()}`);
+        bot.sendMessage(msg.from.id, `Created \"${dir}\", copying files...`);
+        files.copyFiles(folder, dir, (err) => {
+            if (err) return bot.sendMessage(msg.from.id, `Failed to copy files: ${err.toString()}`);
+            bot.sendMessage(msg.from.id, `Done, URL: https://abc.de/fg/${dir}/`);    
+        });
+    });
 });

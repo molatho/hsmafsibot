@@ -1,5 +1,7 @@
+const os = require('os');
 const fs = require("fs");
 const path = require('path');
+const ncp = require('ncp').ncp;
 const async = require("async");
 const crypto = require("crypto");
 var uidNumber = require("uid-number");
@@ -36,20 +38,29 @@ class Files {
     }
 
     getRandomName(length) {
-        return crypto.randomBytes(length / 2).toString('hex');
+        return crypto.randomBytes(length / 2).toString('hex').toUpperCase();
     }
 
     createRandomDirectory(callback) {
         var randomDirectory = this.getRandomName(32);
         var fullPath = path.join(this.config.webRootDirectory, randomDirectory);
         fs.mkdirSync(fullPath, { recursive: false, mode: 0o644});
-        uidNumber("www-data", function (er, uid, gid) {
-            console.log(`UID: ${uid}, GID: ${GID}`);
-            callback(er, randomDirectory);
-            // gid is null because we didn't ask for a group name
-            // uid === 24561 because that's my number.
-          })
-        fs.chownSync(fullPath,)
+        if (os.platform() === 'win32') {
+            callback(null, randomDirectory);
+        } else {
+            uidNumber("www-data", function (err, uid, gid) {
+                if (err) return callback(err);
+                fs.chownSync(fullPath, uid, gid);
+                callback(null, randomDirectory);
+            });
+        }
+    }
+
+    copyFiles(from, to, callback) {
+        var fullSourcePath = path.join(this.config.rootDirectory, from);
+        var fullDestinationPath = path.join(this.config.webRootDirectory, to);
+        ncp.limit = 16;
+        ncp(fullSourcePath, fullDestinationPath, { clobber: false, stopOnerr: true}, callback);
     }
 }
 

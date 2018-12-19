@@ -4,10 +4,8 @@ const CONFIG_FILE = "config.json";
 var _instance = null;
 
 class Config {
-    constructor(botToken, rootDirectory, webRootDirectory) {
-        this.botToken = botToken;
-        this.rootDirectory = rootDirectory;
-        this.webRootDirectory = webRootDirectory;
+    constructor(cfg) {
+        this._cfg = cfg;
     }
     static exists() {
         return fs.existsSync(CONFIG_FILE);
@@ -18,7 +16,9 @@ class Config {
             JSON.stringify({
                 botToken: "Your Token",
                 rootDirectory: "/root/directory",
-                webRootDirectory: "/www/data/webroot"
+                webRootDirectory: "/www/data/webroot",
+                webUid: 33,
+                webGid: 33
             }),
             'utf8'
         );
@@ -28,11 +28,32 @@ class Config {
         if (!Config.exists()) Config.create();
 
         var obj = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
-        _instance = new Config(obj.botToken, obj.rootDirectory, obj.webRootDirectory);
+        _instance = new Config(obj);
         return _instance;
     }
+
+    get botToken() {
+        return this._cfg.botToken;
+    }
+    get rootDirectory() {
+        return this._cfg.rootDirectory;
+    }
+    get webRootDirectory() {
+        return this._cfg.webRootDirectory;
+    }
+    get webUid() {
+        return this._cfg.webUid;
+    }
+    get webGid() {
+        return this._cfg.webGid;
+    }
+
     toString(){
-        return `[Token: \"${this.botToken}\", RootDirectory: \"${this.rootDirectory}]\", WebRootDirectory: \"${this.webRootDirectory}]`;
+        return  `[Token: \"${this._cfg.botToken}\", ` + 
+                `RootDirectory: \"${this._cfg.rootDirectory}]\", ` +
+                `WebRootDirectory: \"${this._cfg.webRootDirectory}\", ` +
+                `WebUid: \"${this._cfg.webUid}\", ` +
+                `WebGid: \"${this._cfg.webGid}\"]`;
     }
 }
 
